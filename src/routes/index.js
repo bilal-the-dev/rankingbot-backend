@@ -33,9 +33,15 @@ const {
   deleteMarketItem,
   getMarketItemById,
 } = require("../controllers/marketController");
+const { login, logout, protect } = require("../controllers/authController");
 
 router.get("/health", health);
 router.get("/overview", getOverview);
+
+router.post("/login", login);
+router.post("/logout", logout);
+
+router.use(protect);
 
 // XP Settings
 router.get("/xp-settings", getXPSettings);

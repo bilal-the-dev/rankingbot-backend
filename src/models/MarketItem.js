@@ -70,9 +70,4 @@ const marketItemSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// ==================== INDEXES ====================
-marketItemSchema.index({ guildId: 1, isActive: 1 });
-marketItemSchema.index({ guildId: 1, isVIPOnly: 1 }); // Good for Public/VIP filtering
-marketItemSchema.index({ guildId: 1, name: 1 }); // Removed unique: true
-
 module.exports = mongoose.model("MarketItem", marketItemSchema);

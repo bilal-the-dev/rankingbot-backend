@@ -10,17 +10,20 @@ const routes = require("./routes/index");
 const errorHandler = require("./middleware/errorHandler");
 const { initializeBot } = require("./services/botServices");
 const logger = require("./utils/logger");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 
 // ====================== MIDDLEWARE ======================
 app.use(helmet());
+
 app.use(
   cors({
     origin: process.env.ORIGIN_URLS.split(","),
     credentials: true,
   }),
 );
+app.use(cookieParser());
 app.use(morgan());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

@@ -37,6 +37,4 @@ const xpSettingsSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-xpSettingsSchema.index({ guildId: 1 });
-
 module.exports = mongoose.model("XPSettings", xpSettingsSchema);

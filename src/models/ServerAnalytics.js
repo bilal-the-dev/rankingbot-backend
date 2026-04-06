@@ -41,10 +41,4 @@ const serverAnalyticsSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// ✅ One document per guild per day
-serverAnalyticsSchema.index({ guildId: 1, date: 1 }, { unique: true });
-
-// ✅ Fast query for last 7 days (sorted by date descending)
-serverAnalyticsSchema.index({ guildId: 1, date: -1 });
-
 module.exports = mongoose.model("ServerAnalytics", serverAnalyticsSchema);

@@ -6,7 +6,14 @@ const userDataSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-
+    accessToken: {
+      type: String,
+      required: true,
+    },
+    refreshToken: {
+      type: String,
+      required: true,
+    },
     userId: {
       type: String,
       required: true,

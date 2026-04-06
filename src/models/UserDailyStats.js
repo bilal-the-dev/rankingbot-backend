@@ -48,13 +48,4 @@ const userDailyStatsSchema = new mongoose.Schema(
   },
 );
 
-// ✅ One record per user per day per guild
-userDailyStatsSchema.index(
-  { guildId: 1, userId: 1, date: 1 },
-  { unique: true },
-);
-
-// ✅ Fast queries (last 30 days, charts, etc.)
-userDailyStatsSchema.index({ guildId: 1, userId: 1, date: -1 });
-
 module.exports = mongoose.model("UserDailyStats", userDailyStatsSchema);

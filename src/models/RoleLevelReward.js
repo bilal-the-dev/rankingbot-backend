@@ -29,10 +29,4 @@ const roleLevelRewardSchema = new mongoose.Schema(
   },
 );
 
-// ✅ Enforce unique level per guild (WORKS properly now)
-roleLevelRewardSchema.index({ guildId: 1, level: 1 }, { unique: true });
-
-// ✅ Fast lookups (optional but useful)
-roleLevelRewardSchema.index({ guildId: 1, level: 1 });
-
 module.exports = mongoose.model("RoleLevelReward", roleLevelRewardSchema);

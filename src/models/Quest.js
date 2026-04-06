@@ -99,8 +99,4 @@ const questSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Indexes for fast queries
-questSchema.index({ guildId: 1, isActive: 1 });
-questSchema.index({ guildId: 1, "participants.userId": 1 });
-
 module.exports = mongoose.model("Quest", questSchema);
