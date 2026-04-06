@@ -17,11 +17,11 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: "http://localhost:5173", // your frontend URL
+    origin: process.env.ORIGIN_URLS.split(","),
     credentials: true,
   }),
 );
-app.use(morgan("combined"));
+app.use(morgan());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -35,20 +35,9 @@ app.get("/", (req, res) => {
 // ====================== ERROR HANDLING ======================
 app.use(errorHandler);
 
-// ====================== START SERVER + BOT ======================
-const start = async () => {
-  try {
-    // 1. Start Discord Bot
-    initializeBot();
+initializeBot();
 
-    // 2. Start Express Server
-    app.listen(config.port, () => {
-      logger(`🚀 Server running at http://localhost:${config.port}`);
-      logger(`Environment: ${config.nodeEnv}`);
-    });
-  } catch (error) {
-    logger(`❌ Failed to start: ${error.message}`);
-  }
-};
-
-start();
+app.listen(config.port, () => {
+  logger(`🚀 Server running at http://localhost:${config.port}`);
+  logger(`Environment: ${config.nodeEnv}`);
+});

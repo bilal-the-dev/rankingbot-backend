@@ -18,7 +18,7 @@ const fetchGuildResources = async (req = null) => {
     throw new Error("GUILD_ID is not configured");
   }
 
-  const guild = await client.guilds.fetch(guildId);
+  const guild = await client.guilds.cache.get(guildId);
   if (!guild) {
     throw new Error(`Guild with ID ${guildId} not found`);
   }

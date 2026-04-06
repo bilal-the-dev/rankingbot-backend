@@ -34,8 +34,6 @@ const getOverview = async (req, res) => {
       date: { $in: [todayStr, yesterdayStr, ...trendDates] },
     }).lean();
 
-    console.log(guildId);
-
     const analyticsMap = {};
     analyticsDocs.forEach((doc) => {
       analyticsMap[doc.date] = doc;

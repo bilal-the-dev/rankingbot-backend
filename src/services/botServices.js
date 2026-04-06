@@ -1,6 +1,5 @@
-const { Client, GatewayIntentBits, IntentsBitField } = require("discord.js");
+const { Client, IntentsBitField } = require("discord.js");
 const logger = require("../utils/logger");
-const config = require("../config/config");
 const { voiceJoinTimes, awardVoiceXP } = require("../utils/levelingHelpers");
 
 const eventHandler = require("../handlers/eventHandler");
@@ -37,7 +36,7 @@ const initializeBot = () => {
     try {
       // User JOINED voice channel
       if (!oldState.channel && newState.channel) {
-        const joinKey = `${guildId}-${userId}`;
+        const joinKey = userId;
         voiceJoinTimes.set(joinKey, Date.now());
         console.log(`🎤 ${newState.member.user.tag} joined VC`);
       }
@@ -47,7 +46,7 @@ const initializeBot = () => {
         oldState.channel &&
         (!newState.channel || oldState.channel.id !== newState.channel.id)
       ) {
-        const joinKey = `${guildId}-${userId}`;
+        const joinKey = userId;
         const joinTime = voiceJoinTimes.get(joinKey);
 
         if (joinTime) {
@@ -72,7 +71,7 @@ const initializeBot = () => {
         }
       }
     } catch (error) {
-      console.error("Error in voiceStateUpdate:", error);
+      console.error(error);
     }
   });
 

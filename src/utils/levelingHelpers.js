@@ -66,9 +66,9 @@ async function awardVoiceXP(client, guildId, userId, minutesSpent) {
     if (!settings || !settings.levelingEnabled) return;
 
     // Get or create user data
-    let user = await User.findOne({ guildId, userId });
+    let user = await User.findOne({ userId });
     if (!user) {
-      user = new User({ guildId, userId });
+      user = new User({ userId });
     }
 
     const oldLevel = user.level;
