@@ -1,7 +1,9 @@
 const MarketItem = require("../models/MarketItem");
-
 const { apiResponse } = require("../utils/response");
 const config = require("../config/config");
+
+// Import resource fetcher (same as used in RoleLevelReward and Quest)
+const { fetchGuildResources } = require("../utils/fetchGuildResources");
 
 const getAllMarketItems = async (req, res) => {
   try {
@@ -18,14 +20,76 @@ const getAllMarketItems = async (req, res) => {
       .sort({ name: 1 })
       .lean();
 
+    // Fetch additional resources based on query params (?roles=true, ?channels=true, etc.)
+    const resources = await fetchGuildResources(req);
+
+    const responseData = {
+      items, // main data
+      ...resources, // roles, channels, etc. (if requested)
+    };
+
     return res
       .status(200)
-      .json(apiResponse(true, "Market items fetched successfully", items));
+      .json(
+        apiResponse(true, "Market items fetched successfully", responseData),
+      );
   } catch (error) {
     console.error("Get Market Items Error:", error);
     return res
       .status(500)
       .json(apiResponse(false, "Failed to fetch market items"));
+  }
+};
+
+// ==================== NEW: Get Single Market Item by ID ====================
+const getMarketItemById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (!id) {
+      return res.status(400).json(apiResponse(false, "Item ID is required"));
+    }
+
+    if (!config.guildId) {
+      return res
+        .status(500)
+        .json(apiResponse(false, "GUILD_ID is not configured in .env"));
+    }
+
+    const item = await MarketItem.findOne({
+      _id: id,
+      guildId: config.guildId,
+    }).lean();
+
+    if (!item) {
+      return res
+        .status(404)
+        .json(
+          apiResponse(
+            false,
+            "Market item not found or does not belong to this server",
+          ),
+        );
+    }
+
+    // Fetch resources if requested (?roles=true, ?channels=true)
+    const resources = await fetchGuildResources(req);
+
+    const responseData = {
+      ...item,
+      ...resources,
+    };
+
+    return res
+      .status(200)
+      .json(
+        apiResponse(true, "Market item fetched successfully", responseData),
+      );
+  } catch (error) {
+    console.error("Get MarketItem By ID Error:", error);
+    return res
+      .status(500)
+      .json(apiResponse(false, "Failed to fetch market item"));
   }
 };
 
@@ -58,8 +122,6 @@ const createMarketItem = async (req, res) => {
         .status(500)
         .json(apiResponse(false, "GUILD_ID is not configured in .env"));
     }
-
-    // Validation for role type
     if (rewardType === "role" && !roleId) {
       return res
         .status(400)
@@ -105,6 +167,17 @@ const createMarketItem = async (req, res) => {
       return res
         .status(400)
         .json(apiResponse(false, "Validation failed: " + messages.join(", ")));
+    }
+
+    if (error.code === 11000) {
+      return res
+        .status(400)
+        .json(
+          apiResponse(
+            false,
+            "An item with this name already exists in your server",
+          ),
+        );
     }
     return res
       .status(500)
@@ -212,6 +285,7 @@ const deleteMarketItem = async (req, res) => {
 
 module.exports = {
   getAllMarketItems,
+  getMarketItemById, // ← New API
   createMarketItem,
   updateMarketItem,
   deleteMarketItem,

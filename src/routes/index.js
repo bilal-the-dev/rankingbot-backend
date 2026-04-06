@@ -31,6 +31,7 @@ const {
   createMarketItem,
   updateMarketItem,
   deleteMarketItem,
+  getMarketItemById,
 } = require("../controllers/marketController");
 
 router.get("/health", health);
@@ -59,6 +60,7 @@ router.put("/quests/:id", updateQuest); // UPDATE quest
 router.delete("/quests/:id", deleteQuest); // DELETE quest
 
 router.get("/market-items", getAllMarketItems);
+router.get("/market-items/:id", getMarketItemById);
 router.post("/market-items", createMarketItem);
 router.put("/market-items/:id", updateMarketItem);
 router.delete("/market-items/:id", deleteMarketItem);

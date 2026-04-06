@@ -27,7 +27,7 @@ const marketItemSchema = new mongoose.Schema(
 
     quantity: {
       type: Number,
-      default: -1, // -1 = unlimited
+      default: -1,
       min: -1,
     },
 
@@ -43,13 +43,11 @@ const marketItemSchema = new mongoose.Schema(
       enum: ["role", "digital", "custom"],
     },
 
-    // For rewardType === "role"
     roleId: {
       type: String,
       default: null,
     },
 
-    // For rewardType === "digital" or "custom" → Product Keys System
     productKeys: {
       type: [String],
       default: [],
@@ -72,8 +70,9 @@ const marketItemSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Indexes
+// ==================== INDEXES ====================
 marketItemSchema.index({ guildId: 1, isActive: 1 });
-marketItemSchema.index({ guildId: 1, rewardType: 1 });
+marketItemSchema.index({ guildId: 1, isVIPOnly: 1 }); // Good for Public/VIP filtering
+marketItemSchema.index({ guildId: 1, name: 1 }); // Removed unique: true
 
 module.exports = mongoose.model("MarketItem", marketItemSchema);
