@@ -104,6 +104,7 @@ module.exports = {
     });
 
     collector.on("collect", async (i) => {
+      if (i.customId.startsWith("buy")) return;
       if (i.customId.startsWith("market_prev_")) {
         currentPage = Math.max(0, currentPage - 1);
       } else if (i.customId.startsWith("market_next_")) {

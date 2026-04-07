@@ -113,6 +113,8 @@ module.exports = {
     });
 
     collector.on("collect", async (i) => {
+      if (i.customId.startsWith("buy")) return;
+
       if (i.customId.startsWith("vipmarket_prev_")) {
         currentPage = Math.max(0, currentPage - 1);
       } else if (i.customId.startsWith("vipmarket_next_")) {
