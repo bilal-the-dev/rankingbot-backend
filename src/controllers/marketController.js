@@ -131,17 +131,10 @@ const createMarketItem = async (req, res) => {
     }
 
     // Convert productKeys (accept string or array)
-    let keysArray = [];
-    if (productKeys) {
-      if (Array.isArray(productKeys)) {
-        keysArray = productKeys;
-      } else if (typeof productKeys === "string") {
-        keysArray = productKeys
-          .split(/[\n,]+/)
-          .map((k) => k.trim())
-          .filter((k) => k.length > 0);
-      }
-    }
+    const keysArray = productKeys
+      .split(/[\n,]+/)
+      .map((k) => k.trim())
+      .filter((k) => k.length > 0);
 
     const newItem = await MarketItem.create({
       guildId: config.guildId,

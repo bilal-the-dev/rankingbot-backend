@@ -27,7 +27,7 @@ module.exports = async (client, interaction) => {
           (role) =>
             role.name.toLowerCase().includes("vip") ||
             // Add your actual VIP role ID here if you want strict check
-            role.id === "YOUR_VIP_ROLE_ID_HERE",
+            role.id === process.env.VIP_ROLE_ID,
         );
 
         if (!hasVIP) {
@@ -48,8 +48,8 @@ module.exports = async (client, interaction) => {
       }
 
       // 4. Get user balance (assuming you have User model, otherwise use UserData)
-      let userData = await UserData.findOne({ guildId, userId }); // Using UserData model we already have
-      if (!userData) userData = new UserData({ guildId, userId, coins: 0 });
+      let userData = await User.findOne({ guildId, userId }); // Using UserData model we already have
+      if (!userData) userData = new User({ guildId, userId, coins: 0 });
 
       if (userData.coins < item.price) {
         return interaction.editReply({
@@ -123,11 +123,6 @@ module.exports = async (client, interaction) => {
       await interaction.editReply({ embeds: [successEmbed] });
     } catch (error) {
       console.error("Buy error:", error);
-      await interaction
-        .editReply({
-          content: "❌ An error occurred while processing your purchase.",
-        })
-        .catch(() => {});
     }
   }
 
