@@ -19,7 +19,7 @@ module.exports = {
     // Fetch only active public items
     const items = await MarketItem.find({
       guildId,
-      marketType: "public",
+      isVIPOnly: true,
       isActive: true,
     }).sort({ price: 1 });
 
