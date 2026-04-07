@@ -4,6 +4,8 @@ const RoleLevelReward = require("../models/RoleLevelReward");
 const User = require("../models/User");
 const cron = require("node-cron");
 const { updateServerAnalytics } = require("./utils");
+const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
+const { generateRankCard } = require("./rankCard");
 
 const messageCooldowns = new Map();
 const voiceJoinTimes = new Map(); // Shared with voiceStateUpdate
@@ -137,6 +139,31 @@ async function checkAndHandleLevelUps(client, messageOrMock, user) {
       if (member) {
         await member.roles.add(reward.roleId);
       }
+
+      const xpSettings = await XPSettings.findOne({ guildId });
+
+      const rankBuffer = await generateRankCard(
+        member,
+        user,
+        xpSettings?.rankCardTheme || "default", // ← Now using the theme from database
+      );
+
+      const attachment = new AttachmentBuilder(rankBuffer, {
+        name: `rank-${target.username}.png`,
+      });
+
+      const embed = new EmbedBuilder()
+        .setColor(0x00ffaa)
+        .setDescription(`${member} just levelled upto ${reward.level}!`)
+        .setImage("attachment://rank.png"); // Make sure this matches the attachment name
+
+      const channel = guild.channels.cache.get(xpSettings.rankCardChannelId);
+
+      if (channel)
+        await channel.send({
+          embeds: [embed],
+          files: [attachment],
+        });
 
       const discordUser = await client.users.fetch(userId).catch(() => null);
       if (discordUser) {
