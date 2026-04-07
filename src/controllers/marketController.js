@@ -192,15 +192,14 @@ const updateMarketItem = async (req, res) => {
 
     const updateData = { ...req.body };
     delete updateData.guildId;
+    const oldDoc = await MarketItem.findById(id);
 
     // Handle productKeys if sent as string
     if (updateData.productKeys) {
-      if (typeof updateData.productKeys === "string") {
-        updateData.productKeys = updateData.productKeys
-          .split(/[\n,]+/)
-          .map((k) => k.trim())
-          .filter((k) => k.length > 0);
-      }
+      updateData.productKeys = updateData.productKeys
+        .split(/[\n,]+/)
+        .map((k) => k.trim())
+        .filter((k) => k.length > 0);
     }
 
     const updatedItem = await MarketItem.findOneAndUpdate(
