@@ -117,14 +117,7 @@ module.exports = {
         currentPage = Math.max(0, currentPage - 1);
       } else if (i.customId.startsWith("vipmarket_next_")) {
         currentPage = Math.min(items.length - 1, currentPage + 1);
-      } else if (i.customId.startsWith("vipmarket_buy_")) {
-        collector.stop();
-        return i.reply({
-          content: "🛍️ Buy feature coming soon...",
-          ephemeral: true,
-        });
       }
-
       await i.update({
         embeds: [generateEmbed(items[currentPage])],
         components: [createButtons(currentPage)],

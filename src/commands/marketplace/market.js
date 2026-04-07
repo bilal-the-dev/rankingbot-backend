@@ -23,7 +23,7 @@ module.exports = {
     // Fetch only active public items
     const items = await MarketItem.find({
       guildId,
-      isVIPOnly: true,
+      isVIPOnly: false,
       isActive: true,
     }).sort({ price: 1 });
 
@@ -108,13 +108,6 @@ module.exports = {
         currentPage = Math.max(0, currentPage - 1);
       } else if (i.customId.startsWith("market_next_")) {
         currentPage = Math.min(items.length - 1, currentPage + 1);
-      } else if (i.customId.startsWith("market_buy_")) {
-        // We'll handle buying in the next step
-        collector.stop();
-        return i.reply({
-          content: "🛍️ Buy feature coming in next step...",
-          ephemeral: true,
-        });
       }
 
       await i.update({
