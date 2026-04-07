@@ -149,7 +149,7 @@ async function checkAndHandleLevelUps(client, messageOrMock, user) {
       );
 
       const attachment = new AttachmentBuilder(rankBuffer, {
-        name: `rank-${target.username}.png`,
+        name: `rank-${member.user.username}.png`,
       });
 
       const embed = new EmbedBuilder()
