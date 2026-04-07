@@ -77,7 +77,7 @@ module.exports = {
           .setDisabled(current === 0),
 
         new ButtonBuilder()
-          .setCustomId(`buy_${items[current].itemId}`)
+          .setCustomId(`buy_${items[current]._id}`)
           .setLabel("🛍️ Buy")
           .setStyle(ButtonStyle.Success),
 
