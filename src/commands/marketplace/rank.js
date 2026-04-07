@@ -7,6 +7,7 @@ const {
 } = require("discord.js");
 const User = require("../../models/User");
 const { generateRankCard } = require("../../utils/rankCard");
+const XPSettings = require("../../models/XPSettings");
 
 module.exports = {
   name: "rank",
@@ -52,8 +53,9 @@ module.exports = {
         member = null; // User may have left the server
       }
 
+      const xpSettings = await XPSettings.findOne({ guildId });
       // Pass the user's chosen theme (if you added the field to your schema)
-      const theme = userData.rankCardTheme || "default";
+      const theme = xpSettings?.rankCardTheme || "default";
 
       const rankBuffer = await generateRankCard(
         member || {
