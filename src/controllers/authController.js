@@ -52,10 +52,6 @@ exports.login = async (req, res) => {
     }
 
     await setJWTCookie(discordUser, req, res);
-
-    return res
-      .status(200)
-      .json(apiResponse(true, "Login successful", discordUser));
   } catch (err) {
     return res
       .status(500)

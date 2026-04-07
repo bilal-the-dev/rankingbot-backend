@@ -30,7 +30,6 @@ const fetchGuildResources = async (req = null) => {
     !req || req.query.channels === "true" || req.query.channels === "1";
   if (includeChannels) {
     // Ensure cache is up-to-date
-    await guild.channels.fetch();
 
     result.channels = guild.channels.cache
       .filter(
@@ -51,8 +50,6 @@ const fetchGuildResources = async (req = null) => {
   const includeRoles =
     !req || req.query.roles === "true" || req.query.roles === "1";
   if (includeRoles) {
-    await guild.roles.fetch();
-
     result.roles = guild.roles.cache
       .filter((role) => !role.managed && role.name !== "@everyone") // optional: filter bot roles / @everyone
       .map((role) => ({
@@ -69,7 +66,6 @@ const fetchGuildResources = async (req = null) => {
     !req || req.query.users === "true" || req.query.users === "1";
   if (includeUsers) {
     // Fetch all members (this can be heavy on large servers)
-    await guild.members.fetch({ withPresences: false });
 
     result.users = guild.members.cache
       .filter((member) => !member.user.bot) // optional: exclude bots

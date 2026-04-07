@@ -3,6 +3,7 @@ const logger = require("../utils/logger");
 const { voiceJoinTimes, awardVoiceXP } = require("../utils/levelingHelpers");
 
 const eventHandler = require("../handlers/eventHandler");
+const config = require("../config/config");
 let clientInstance = null;
 
 const initializeBot = () => {
@@ -19,8 +20,10 @@ const initializeBot = () => {
     partials: ["CHANNEL", "GUILD_MEMBER", "USER"],
   });
 
-  clientInstance.once("ready", () => {
+  clientInstance.once("ready", async () => {
     logger(`✅ Discord Bot logged in as ${clientInstance.user.tag}`);
+    const guild = clientInstance.guilds.cache.get(config.guildId);
+    await guild.members.fetch();
   });
 
   clientInstance.on("error", (error) => {
