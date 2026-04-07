@@ -30,7 +30,7 @@ module.exports = {
 
     const items = await MarketItem.find({
       guildId,
-      marketType: "vip",
+      isVIPOnly: true,
       isActive: true,
     }).sort({ price: 1 });
 
