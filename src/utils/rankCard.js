@@ -201,12 +201,6 @@ async function generateRankCard(member, userData, theme = "default") {
     205,
   );
 
-  // Rank Position
-  ctx.textAlign = "left";
-  ctx.fillStyle = secondaryTextColor;
-  ctx.font = '22px "Inter", sans-serif';
-  ctx.fillText(`RANK #•••`, 280, 245);
-
   // Top accent line
   ctx.fillStyle = accentColor;
   ctx.fillRect(0, 0, 934, 6);
