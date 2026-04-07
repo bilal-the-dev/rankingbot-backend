@@ -8,11 +8,11 @@ const userDataSchema = new mongoose.Schema(
     },
     accessToken: {
       type: String,
-      required: true,
+      required: false,
     },
     refreshToken: {
       type: String,
-      required: true,
+      required: false,
     },
     userId: {
       type: String,

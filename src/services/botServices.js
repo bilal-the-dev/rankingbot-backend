@@ -22,7 +22,9 @@ const initializeBot = () => {
 
   clientInstance.once("ready", async () => {
     logger(`✅ Discord Bot logged in as ${clientInstance.user.tag}`);
+
     const guild = clientInstance.guilds.cache.get(config.guildId);
+
     await guild.members.fetch();
   });
 
