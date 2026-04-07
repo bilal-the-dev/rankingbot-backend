@@ -3,6 +3,8 @@ const { promisify } = require("util");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { OAuth } = require("discord-oauth2-utils");
+const { getClient } = require("../services/botServices");
+const config = require("../config/config");
 const { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } = process.env;
 
 let discordOauth2UserCache = new Map();
@@ -71,6 +73,17 @@ exports.isLoggedIn = async (req) => {
       ...oauthCache,
     });
   }
+
+  const guild = getClient().guilds.cache.get(config.guildId);
+  const member = await guild.members.cache.get(currentUser.userId);
+
+  if (
+    !member ||
+    !member.roles.cache.some((r) =>
+      process.env.ACCESS_ROLE_IDS.split(",").includes(r.id),
+    )
+  )
+    throw new Error("You dont have the required role to access the dashboard");
 
   req.dbUser = currentUser;
   req.discordUser = oauthCache;

@@ -1,5 +1,6 @@
 const config = require("../config/config");
 const User = require("../models/User");
+const { getClient } = require("../services/botServices");
 const { setJWTCookie } = require("../utils/cookie");
 const {
   isLoggedIn,
@@ -35,6 +36,18 @@ exports.login = async (req, res) => {
 
     const discordUser = await getDiscordUserFromToken(data.access_token);
 
+    const guild = getClient().guilds.cache.get(config.guildId);
+    const member = await guild.members.cache.get(discordUser.id);
+
+    if (
+      !member ||
+      !member.roles.cache.some((r) =>
+        process.env.ACCESS_ROLE_IDS.split(",").includes(r.id),
+      )
+    )
+      throw new Error(
+        "You dont have the required role to access the dashboard",
+      );
     let userDoc = await User.findOne({ userId: discordUser.id });
 
     if (userDoc) {
