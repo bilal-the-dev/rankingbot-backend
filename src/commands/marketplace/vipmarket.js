@@ -87,7 +87,7 @@ module.exports = {
           .setDisabled(current === 0),
 
         new ButtonBuilder()
-          .setCustomId(`vipmarket_buy_${items[current].itemId}`)
+          .setCustomId(`vipmarket_buy_${items[current]._id}`)
           .setLabel("🛍️ Buy")
           .setStyle(ButtonStyle.Success),
 
