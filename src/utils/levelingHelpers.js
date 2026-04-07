@@ -144,8 +144,7 @@ async function checkAndHandleLevelUps(client, messageOrMock, user) {
           .send({
             content:
               `🎉 **Level Up!** Congratulations!\n\n` +
-              `You have reached **Level ${reward.level}** (${reward.requiredXP.toLocaleString()} XP)!\n` +
-              `You received the role <@&${reward.roleId}>.\n\nKeep being active!`,
+              `You have reached **Level ${reward.level}** (${reward.requiredXP.toLocaleString()} XP)!\n`,
           })
           .catch(() => {});
       }
