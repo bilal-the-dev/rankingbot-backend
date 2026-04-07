@@ -18,7 +18,7 @@ module.exports = {
     const member = interaction.member;
 
     // VIP Role Check (You can make this role ID configurable later via dashboard)
-    const VIP_ROLE_ID = "YOUR_VIP_ROLE_ID_HERE"; // ← Change this or make it dynamic
+    const VIP_ROLE_ID = process.env.VIP_ROLE_ID; // ← Change this or make it dynamic
 
     if (!member.roles.cache.has(VIP_ROLE_ID)) {
       return interaction.reply({
