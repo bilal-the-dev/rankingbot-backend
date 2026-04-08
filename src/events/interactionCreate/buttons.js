@@ -142,6 +142,21 @@ module.exports = async (client, interaction) => {
         });
       }
 
+      // === NEW: Check if deadline has passed ===
+      if (new Date(quest.endDate) < new Date()) {
+        // Optional: auto-deactivate the quest if it's still marked active
+        if (quest.isActive) {
+          quest.isActive = false;
+          await quest.save();
+        }
+
+        return interaction.reply({
+          content:
+            "❌ This quest has already ended. You can no longer join it.",
+          ephemeral: true,
+        });
+      }
+
       // Check if already participating
       const alreadyJoined = quest.participants.some((p) => p.userId === userId);
       if (alreadyJoined) {
@@ -166,7 +181,7 @@ module.exports = async (client, interaction) => {
         ephemeral: true,
       });
 
-      // DM the user
+      // DM the user (unchanged)
       try {
         const dmEmbed = new EmbedBuilder()
           .setTitle("🎯 Quest Joined!")

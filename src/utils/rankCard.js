@@ -1,15 +1,18 @@
 // utils/rankCard.js
 const { createCanvas, loadImage, registerFont } = require("@napi-rs/canvas");
-const { AttachmentBuilder } = require("discord.js");
 
-// Register font
 try {
   registerFont("./fonts/Inter-Bold.ttf", { family: "Inter" });
 } catch (e) {
   console.log("Font not found, using default");
 }
 
-async function generateRankCard(member, userData, theme = "default") {
+async function generateRankCard(
+  member,
+  userData,
+  theme = "default",
+  nextRequiredXP = 15000,
+) {
   const canvas = createCanvas(934, 282);
   const ctx = canvas.getContext("2d");
 
@@ -29,7 +32,7 @@ async function generateRankCard(member, userData, theme = "default") {
       bgColor = "#0a0a0a";
       overlayStart = "rgba(100, 100, 255, 0.06)";
       overlayEnd = "rgba(255, 100, 150, 0.04)";
-      accentColor = "#6366f1"; // Indigo
+      accentColor = "#6366f1";
       levelColor = "#a5b4fc";
       textColor = "#e2e8f0";
       secondaryTextColor = "#94a3b8";
@@ -41,7 +44,7 @@ async function generateRankCard(member, userData, theme = "default") {
       bgColor = "#f8fafc";
       overlayStart = "rgba(59, 130, 246, 0.12)";
       overlayEnd = "rgba(16, 185, 129, 0.08)";
-      accentColor = "#3b82f6"; // Blue
+      accentColor = "#3b82f6";
       levelColor = "#1e40af";
       textColor = "#1e2937";
       secondaryTextColor = "#475569";
@@ -109,7 +112,7 @@ async function generateRankCard(member, userData, theme = "default") {
       glowColor = "#fb7185";
       break;
 
-    case "default": // fallback / original style
+    case "default":
     default:
       bgColor = "#0f0f1a";
       overlayStart = "rgba(0, 255, 150, 0.08)";
@@ -127,7 +130,7 @@ async function generateRankCard(member, userData, theme = "default") {
   ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, 934, 282);
 
-  // Subtle gradient overlay
+  // Gradient overlay
   const grad = ctx.createLinearGradient(0, 0, 934, 282);
   grad.addColorStop(0, overlayStart);
   grad.addColorStop(1, overlayEnd);
@@ -138,7 +141,7 @@ async function generateRankCard(member, userData, theme = "default") {
   const avatarURL = member.displayAvatarURL({ extension: "png", size: 512 });
   const avatar = await loadImage(avatarURL);
 
-  // Avatar frame with theme-specific glow
+  // Avatar frame
   ctx.save();
   ctx.beginPath();
   ctx.arc(140, 141, 78, 0, Math.PI * 2);
@@ -148,7 +151,6 @@ async function generateRankCard(member, userData, theme = "default") {
   ctx.fill();
   ctx.restore();
 
-  // Draw avatar
   ctx.save();
   ctx.beginPath();
   ctx.arc(140, 141, 70, 0, Math.PI * 2);
@@ -159,30 +161,24 @@ async function generateRankCard(member, userData, theme = "default") {
   // Username
   ctx.fillStyle = textColor;
   ctx.font = 'bold 42px "Inter", sans-serif';
-  ctx.fillText(member.displayName || member.user.username, 280, 110);
+  ctx.fillText(member.displayName || member.user?.username || "User", 280, 110);
 
   // Level
   ctx.fillStyle = levelColor;
   ctx.font = 'bold 28px "Inter", sans-serif';
-  ctx.fillText(`LEVEL ${userData.level}`, 280, 150);
+  ctx.fillText(`LEVEL ${userData.level || 1}`, 280, 150);
 
-  // XP Progress Bar Background
+  // XP Bar Background
   ctx.fillStyle = barBgColor;
   ctx.beginPath();
   ctx.roundRect(280, 180, 580, 28, 14);
   ctx.fill();
 
-  // Calculate progress (your existing logic - kept as-is)
-  const currentLevelXP = userData.xp || 0;
-  const nextLevelXP = Math.floor(0.1 * Math.sqrt(currentLevelXP)) + 1;
-  const xpNeededForNext =
-    Math.pow(nextLevelXP / 0.1, 2) - currentLevelXP || 100;
-  const progress = Math.min(
-    1,
-    currentLevelXP / (currentLevelXP + xpNeededForNext),
-  );
+  const currentXP = userData.xp || 0;
+  const requiredXP = nextRequiredXP || 15000; // fallback
+  const progress = Math.min(1, currentXP / requiredXP);
 
-  // Progress Bar Fill - theme-aware gradient
+  // Progress Bar Fill
   const barGrad = ctx.createLinearGradient(280, 180, 280 + 580 * progress, 180);
   barGrad.addColorStop(0, levelColor);
   barGrad.addColorStop(1, accentColor);
@@ -196,7 +192,7 @@ async function generateRankCard(member, userData, theme = "default") {
   ctx.font = 'bold 22px "Inter", sans-serif';
   ctx.textAlign = "right";
   ctx.fillText(
-    `${currentLevelXP.toLocaleString()} / ${(currentLevelXP + xpNeededForNext).toLocaleString()} XP`,
+    `${currentXP.toLocaleString()} / ${requiredXP.toLocaleString()} XP`,
     840,
     205,
   );

@@ -24,14 +24,29 @@ const resetAllUsers = async (req, res) => {
         .json(apiResponse(false, "GUILD_ID is not configured in .env"));
     }
 
-    const result = await User.deleteMany({ guildId: config.guildId });
+    const result = await User.updateMany(
+      { guildId: config.guildId },
+      {
+        $set: {
+          xp: 0,
+          coins: 0,
+          level: 1,
+          messages: 0,
+          // Add any other stats fields you have in your User model
+          totalXp: 0,
+          voiceMinutes: 0,
+          lastMessageAt: null,
+          lastVoiceUpdateAt: null,
+        },
+      },
+    );
 
     return res.status(200).json(
       apiResponse(
         true,
-        `Successfully reset all users (${result.deletedCount} users affected). All XP, coins, messages, and stats have been cleared.`,
+        `Successfully reset all users (${result.modifiedCount} users affected). All XP, coins, levels, messages, and stats have been cleared.`,
         {
-          deletedCount: result.deletedCount,
+          modifiedCount: result.modifiedCount,
         },
       ),
     );
@@ -70,24 +85,41 @@ const resetSpecificUser = async (req, res) => {
         .json(apiResponse(false, "GUILD_ID is not configured in .env"));
     }
 
-    const result = await User.deleteOne({
-      guildId: config.guildId,
-      userId,
-    });
+    const result = await User.updateOne(
+      {
+        guildId: config.guildId,
+        userId,
+      },
+      {
+        $set: {
+          xp: 0,
+          coins: 0,
+          level: 1,
+          messages: 0,
+          // Add any other stats fields you have
+          totalXp: 0,
+          voiceMinutes: 0,
+          lastMessageAt: null,
+          lastVoiceUpdateAt: null,
+        },
+      },
+    );
 
-    if (result.deletedCount === 0) {
+    if (result.modifiedCount === 0) {
       return res
         .status(404)
-        .json(apiResponse(false, "User not found or already has no data"));
+        .json(
+          apiResponse(false, "User not found or already has no stats to reset"),
+        );
     }
 
     return res.status(200).json(
       apiResponse(
         true,
-        `Successfully reset user ${userId}. All their XP, coins, messages, and stats have been cleared.`,
+        `Successfully reset user ${userId}. All their XP, coins, levels, messages, and stats have been cleared.`,
         {
           userId,
-          deleted: true,
+          modified: true,
         },
       ),
     );

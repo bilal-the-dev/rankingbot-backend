@@ -106,18 +106,18 @@ async function awardVoiceXP(client, guildId, userId, minutesSpent) {
 }
 
 /* ==================== Level Up Handler ==================== */
+
 async function checkAndHandleLevelUps(client, messageOrMock, user) {
   const guildId = user.guildId;
   const userId = user.userId;
 
-  const allRewards = await RoleLevelReward.find({ guildId }).sort({
-    requiredXP: 1,
-  });
+  const allRewards = await RoleLevelReward.find({ guildId }).sort({ level: 1 }); // Better to sort by level
   if (allRewards.length === 0) return;
 
   let leveledUp = false;
   let newLevelsReached = [];
 
+  // Handle level ups
   for (const reward of allRewards) {
     if (user.xp >= reward.requiredXP && user.level < reward.level) {
       user.level = reward.level;
@@ -130,48 +130,69 @@ async function checkAndHandleLevelUps(client, messageOrMock, user) {
 
   await user.save();
 
+  // Fetch XP settings once
+  const xpSettings = await XPSettings.findOne({ guildId });
+
+  // Process each new level reached
   for (const reward of newLevelsReached) {
     try {
       const guild = client.guilds.cache.get(guildId);
-      if (!guild) return;
+      if (!guild) continue;
 
       const member = await guild.members.fetch(userId).catch(() => null);
-      if (member) {
-        await member.roles.add(reward.roleId);
+
+      // === Calculate next required XP for the rank card ===
+      let nextRequiredXP = 100; // safe default
+
+      if (allRewards.length > 0) {
+        const nextReward = allRewards.find((r) => r.level > user.level);
+        if (nextReward) {
+          nextRequiredXP = nextReward.requiredXP;
+        } else {
+          // User is at or above the highest level
+          nextRequiredXP = allRewards[allRewards.length - 1].requiredXP;
+        }
       }
 
-      const xpSettings = await XPSettings.findOne({ guildId });
-
+      // Generate rank card with correct next XP
       const rankBuffer = await generateRankCard(
-        member,
+        member || { user: { username: user.userId }, displayName: "User" }, // fallback
         user,
-        xpSettings?.rankCardTheme || "default", // ← Now using the theme from database
+        xpSettings?.rankCardTheme || "default",
+        nextRequiredXP, // ← Important: Pass next required XP
       );
 
       const attachment = new AttachmentBuilder(rankBuffer, {
-        name: `rank-${member.user.username}.png`,
+        name: `rank-${member?.user?.username || "user"}.png`,
       });
 
       const embed = new EmbedBuilder()
         .setColor(0x00ffaa)
-        .setDescription(`${member} just levelled upto ${reward.level}!`)
-        .setImage("attachment://rank.png"); // Make sure this matches the attachment name
+        .setDescription(
+          `${member || `<@${userId}>`} just levelled up to **Level ${reward.level}**!`,
+        )
+        .setImage("attachment://rank.png");
 
-      const channel = guild.channels.cache.get(xpSettings.rankCardChannelId);
+      // Send to announcement channel
+      const channel = xpSettings?.rankCardChannelId
+        ? guild.channels.cache.get(xpSettings.rankCardChannelId)
+        : null;
 
-      if (channel)
+      if (channel) {
         await channel.send({
           embeds: [embed],
           files: [attachment],
         });
+      }
 
+      // DM the user
       const discordUser = await client.users.fetch(userId).catch(() => null);
       if (discordUser) {
         await discordUser
           .send({
             content:
               `🎉 **Level Up!** Congratulations!\n\n` +
-              `You have reached **Level ${reward.level}** (${reward.requiredXP.toLocaleString()} XP)!\n`,
+              `You have reached **Level ${reward.level}** (${reward.requiredXP.toLocaleString()} XP)!`,
           })
           .catch(() => {});
       }

@@ -34,9 +34,12 @@ const {
   getMarketItemById,
 } = require("../controllers/marketController");
 const { login, logout, protect } = require("../controllers/authController");
+const { getMe } = require("../controllers/userController");
 
 router.post("/login", login);
 router.post("/logout", logout);
+
+router.get("/user/me", getMe);
 
 router.use(protect);
 router.get("/health", health);

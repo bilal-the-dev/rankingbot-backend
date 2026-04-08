@@ -7,7 +7,7 @@ const {
 } = require("discord.js");
 const User = require("../../models/User");
 const { generateRankCard } = require("../../utils/rankCard");
-const XPSettings = require("../../models/XPSettings");
+const RoleLevelReward = require("../../models/RoleLevelReward"); // ← Add this
 
 module.exports = {
   name: "rank",
@@ -22,10 +22,6 @@ module.exports = {
     },
   ],
 
-  /**
-   * @param {Client} client
-   * @param {Interaction} interaction
-   */
   callback: async (client, interaction) => {
     const target = interaction.options.getUser("user") || interaction.user;
     const guildId = interaction.guild.id;
@@ -33,37 +29,47 @@ module.exports = {
     await interaction.deferReply();
 
     try {
-      // Fetch or create user data
       let userData = await User.findOne({ guildId, userId: target.id });
 
       if (!userData) {
-        userData = new User({
-          guildId,
-          userId: target.id,
-          // You can add defaults here if needed (level: 1, xp: 0, etc.)
-        });
+        userData = new User({ guildId, userId: target.id });
         await userData.save();
       }
 
-      // Fetch member for displayName + avatar (fallback to user)
       let member;
       try {
         member = await interaction.guild.members.fetch(target.id);
       } catch (err) {
-        member = null; // User may have left the server
+        member = null;
       }
 
-      const xpSettings = await XPSettings.findOne({ guildId });
-      // Pass the user's chosen theme (if you added the field to your schema)
-      const theme = xpSettings?.rankCardTheme || "default";
+      // === Fetch next required XP from RoleLevelReward ===
+      let nextRequiredXP = 15000; // safe default
+
+      const rewards = await RoleLevelReward.find({ guildId }).sort({
+        level: 1,
+      });
+
+      if (rewards.length > 0) {
+        // Find the smallest level > current user level
+        const nextReward = rewards.find((r) => r.level > (userData.level || 0));
+
+        if (nextReward) {
+          nextRequiredXP = nextReward.requiredXP;
+        } else {
+          // No higher level exists → use the highest available
+          nextRequiredXP = rewards[rewards.length - 1].requiredXP;
+        }
+      }
+      // If no rewards at all → keep default 100
+
+      const theme = "default"; // You can later pull from XPSettings or userData
 
       const rankBuffer = await generateRankCard(
-        member || {
-          user: target,
-          displayName: target.username,
-        },
+        member || { user: target, displayName: target.username },
         userData,
-        theme, // ← Now using the theme from database
+        theme,
+        nextRequiredXP, // ← Pass the correct next required XP
       );
 
       const attachment = new AttachmentBuilder(rankBuffer, {
@@ -73,7 +79,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor(0x00ffaa)
         .setDescription(`**Rank Card for ${target}**`)
-        .setImage("attachment://rank.png"); // Make sure this matches the attachment name
+        .setImage("attachment://rank.png");
 
       await interaction.editReply({
         embeds: [embed],
@@ -81,10 +87,9 @@ module.exports = {
       });
     } catch (error) {
       console.error("Rank card generation error:", error);
-
       await interaction.editReply({
         content: "❌ Failed to generate rank card. Please try again later.",
-        ephemeral: true, // Only the user sees the error
+        ephemeral: true,
       });
     }
   },
