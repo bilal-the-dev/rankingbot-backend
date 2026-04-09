@@ -60,11 +60,15 @@ module.exports = {
             value: item.rewardType.replace("_", " ").toUpperCase(),
             inline: true,
           },
-          item.rewardType === "role" && {
-            name: "Role",
-            value: `<@&${item.roleId}>`,
-            inline: true,
-          },
+          ...(item.rewardType === "role"
+            ? [
+                {
+                  name: "Role",
+                  value: `<@&${item.roleId}>`,
+                  inline: true,
+                },
+              ]
+            : []),
         )
         .setFooter({
           text: `Item ${currentPage + 1} of ${items.length} • Use buttons to navigate`,
