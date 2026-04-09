@@ -2,6 +2,7 @@ const {
   Client,
   Interaction,
   ApplicationCommandOptionType,
+  EmbedBuilder,
 } = require("discord.js");
 const MarketItem = require("../../models/MarketItem");
 const User = require("../../models/User");

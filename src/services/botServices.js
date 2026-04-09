@@ -18,6 +18,7 @@ const { updateServerAnalytics } = require("../utils/utils"); // Added
 
 const Quest = require("../models/Quest");
 const User = require("../models/User");
+const Invite = require("../models/Invite");
 
 let clientInstance = null;
 let inviteCache = new Map(); // inviteCode → { uses, inviterId }
@@ -43,32 +44,29 @@ const initializeBot = () => {
   });
 
   clientInstance.once("ready", async () => {
-    logger(`✅ Discord Bot logged in as ${clientInstance.user.tag}`);
+    console.log(`✅ Logged in as ${clientInstance.user.tag}`);
 
     const guild = clientInstance.guilds.cache.get(config.guildId);
+    if (!guild) return;
 
-    await guild.members.fetch();
+    try {
+      const invites = await guild.invites.fetch();
 
-    // Initialize invite cache for invite tracking
-    if (config.guildId) {
-      const guild = clientInstance.guilds.cache.get(config.guildId);
-      if (guild) {
-        try {
-          const invites = await guild.invites.fetch();
-          inviteCache.clear();
-          invites.forEach((invite) => {
-            if (invite.code && invite.inviter) {
-              inviteCache.set(invite.code, {
-                uses: invite.uses || 0,
-                inviterId: invite.inviter.id,
-              });
-            }
-          });
-          logger("✅ Invite cache initialized");
-        } catch (e) {
-          logger("⚠️ Could not fetch initial invites");
-        }
+      for (const invite of invites.values()) {
+        await Invite.findOneAndUpdate(
+          { guildId: guild.id, code: invite.code },
+          {
+            guildId: guild.id,
+            code: invite.code,
+            uses: invite.uses || 0,
+            inviterId: invite.inviter?.id || null,
+          },
+          { upsert: true, new: true },
+        );
       }
+      console.log("✅ Invite database initialized");
+    } catch (err) {
+      console.error("⚠️ Could not fetch initial invites:", err);
     }
   });
 
@@ -189,19 +187,66 @@ const initializeBot = () => {
     // message_count
     await handleQuestProgress(userId, "message_count", 1);
 
-    // image_posts
-    const hasImage = message.attachments.some((att) =>
+    // image_posts - Check both attachments and embeds
+    let hasImage = message.attachments.some((att) =>
       att.contentType?.startsWith("image/"),
     );
-    if (hasImage) await handleQuestProgress(userId, "image_posts", 1);
 
-    // gif_posts
-    const hasGif = message.attachments.some(
-      (att) =>
-        att.contentType?.startsWith("image/gif") ||
-        att.url.toLowerCase().endsWith(".gif"),
-    );
-    if (hasGif) await handleQuestProgress(userId, "gif_posts", 1);
+    // gif_posts - Improved detection for Tenor GIFs
+    let hasGif = false;
+
+    // 1. Check real attachments (for manually uploaded .gif files)
+    hasGif = message.attachments.some((att) => {
+      const url = (att.url || "").toLowerCase();
+      const contentType = (att.contentType || "").toLowerCase();
+
+      return (
+        contentType.startsWith("image/gif") ||
+        url.endsWith(".gif") ||
+        url.includes("tenor.com") ||
+        url.includes("media.tenor")
+      );
+    });
+
+    // 2. Check embeds - This is the important part for Tenor GIF picker
+    if (!hasGif && message.embeds.length > 0) {
+      hasGif = message.embeds.some((embed) => {
+        const embedUrl = (embed.url || "").toLowerCase();
+        const imageUrl = (embed.image?.url || "").toLowerCase();
+        const videoUrl = (embed.video?.url || "").toLowerCase();
+        const providerName = (embed.provider?.name || "").toLowerCase();
+
+        return (
+          embedUrl.includes("tenor.com") ||
+          imageUrl.includes("tenor.com") ||
+          videoUrl.includes("tenor.com") ||
+          imageUrl.endsWith(".gif") ||
+          videoUrl.endsWith(".gif") ||
+          providerName.includes("tenor")
+        );
+      });
+    }
+
+    // Count image_posts (normal images + GIFs)
+    if (hasImage || hasGif) {
+      await handleQuestProgress(userId, "image_posts", 1);
+    }
+
+    // Count gif_posts
+    if (hasGif) {
+      await handleQuestProgress(userId, "gif_posts", 1);
+      console.log(`✅ GIF detected for user ${userId}`);
+    } else if (message.embeds.length > 0) {
+      console.log(
+        `Embed detected but not counted as GIF:`,
+        message.embeds.map((e) => ({
+          url: e.url,
+          provider: e.provider?.name,
+          hasVideo: !!e.video,
+          hasImage: !!e.image,
+        })),
+      );
+    }
   });
 
   // Voice State Update (Cleaned - removed duplicate listener)
@@ -260,42 +305,61 @@ const initializeBot = () => {
     await handleQuestProgress(userId, "reactions", 1);
   });
 
-  clientInstance.on("inviteCreate", (invite) => {
-    if (invite.guild.id !== config.guildId || !invite.inviter) return;
-    inviteCache.set(invite.code, {
-      uses: invite.uses || 0,
-      inviterId: invite.inviter.id,
-    });
+  clientInstance.on("inviteCreate", async (invite) => {
+    if (invite.guild.id !== config.guildId) return;
+
+    try {
+      await Invite.findOneAndUpdate(
+        { guildId: invite.guild.id, code: invite.code },
+        {
+          guildId: invite.guild.id,
+          code: invite.code,
+          uses: invite.uses || 0,
+          inviterId: invite.inviter?.id || null,
+        },
+        { upsert: true, new: true },
+      );
+      console.log(`✅ New invite created: ${invite.code}`);
+    } catch (err) {
+      console.error("Error saving new invite:", err);
+    }
   });
 
   clientInstance.on("guildMemberAdd", async (member) => {
     if (member.guild.id !== config.guildId) return;
 
+    console.log(`👤 ${member.user.tag} joined the server`);
+
     try {
-      const newInvites = await member.guild.invites.fetch();
-      let inviterId = null;
+      const guildInvites = await member.guild.invites.fetch();
 
-      newInvites.forEach((invite) => {
-        const oldData = inviteCache.get(invite.code);
-        if (oldData && invite.uses > oldData.uses) {
-          inviterId = oldData.inviterId;
-        }
-      });
-
-      // Update cache with latest data
-      newInvites.forEach((invite) => {
-        inviteCache.set(invite.code, {
-          uses: invite.uses || 0,
-          inviterId: invite.inviter ? invite.inviter.id : null,
+      for (const invite of guildInvites.values()) {
+        // Find this invite in database
+        const dbInvite = await Invite.findOne({
+          guildId: member.guild.id,
+          code: invite.code,
         });
-      });
 
-      if (inviterId) {
-        await handleQuestProgress(inviterId, "invites", 1);
-        logger(`✅ Invite tracked for user ${inviterId} (+1 invite)`);
+        // If this invite's uses increased → this is the one used
+        if (dbInvite && invite.uses > dbInvite.uses) {
+          console.log(`✅ Invite used: ${invite.code} by ${member.user.tag}`);
+
+          // Update the uses in database
+          dbInvite.uses = invite.uses;
+          await dbInvite.save();
+
+          const inviterId = dbInvite.inviterId;
+
+          if (inviterId) {
+            await handleQuestProgress(inviterId, "invites", 1);
+            console.log(`🎉 +1 invite quest for inviter: ${inviterId}`);
+          }
+
+          break; // Stop after finding the used invite
+        }
       }
-    } catch (e) {
-      // Silent fail if invites fetch fails
+    } catch (err) {
+      console.error("Error tracking invite on member join:", err);
     }
   });
 

@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { startXPDailyDecay } = require("../../utils/levelingHelpers");
 const Quest = require("../../models/Quest");
+const cron = require("node-cron");
 module.exports = (client) => {
   console.log(`${client.user.tag} is online.`);
   connectDB();
