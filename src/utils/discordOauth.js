@@ -15,14 +15,14 @@ const client = new OAuth({
   redirectUri: REDIRECT_URI,
   scopes: ["identify", "guilds"],
 });
-console.log(client);
+// console.log(client);
 
 exports.getAccessTokenFromCode = async (code) => {
-  console.log(code);
+  // console.log(code);
 
   const res = await client.requestToken(code);
 
-  console.log(res);
+  // console.log(res);
 
   if (res.error === "invalid_grant") {
     throw new Error("The authorization code is not valid");
@@ -37,7 +37,7 @@ exports.getAccessTokenFromCode = async (code) => {
 
 exports.getDiscordUserFromToken = async (accessToken) => {
   const user_raw = await client.fetchUser(accessToken);
-  console.log(user_raw);
+  // console.log(user_raw);
 
   if (user_raw.code === 401) {
     throw new Error("Could not get user profile (unauthorized)");
