@@ -17,12 +17,14 @@ const app = express();
 // ====================== MIDDLEWARE ======================
 app.use(helmet());
 
-app.use(
-  cors({
-    origin: process.env.ORIGIN_URLS.split(","),
-    credentials: true,
-  }),
-);
+const corsOptions = {
+  origin: process.env.ORIGIN_URLS.split(","),
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
+app.options("*", cors(corsOptions));
 app.use(cookieParser());
 app.use(morgan());
 app.use(express.json());
